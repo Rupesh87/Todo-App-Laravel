@@ -8,7 +8,7 @@
                 <div class="card-header">
                 <div class="action">
                
-                <a href="{{ url('/tasks/create') }}" class="btn btn-primary float-right">Create Task</a>
+                <a href="{{ url('/tasks') }}" class="btn btn-primary float-right">Create Task</a>
 
                 </div>
             <h3>Manage Task</h3></div>

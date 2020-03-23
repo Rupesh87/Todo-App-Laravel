@@ -41,6 +41,9 @@ class User extends Authenticatable
     public function tasks() {
         return $this->hasMany('App\Task') ;
     }
+    protected $guarded = [
+        'is_admin'
+    ];
 
   
 }

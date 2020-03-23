@@ -5,6 +5,7 @@ use App\User;
 use Auth;
 use Illuminate\Http\Request;
 use Validator,Redirect,Response;
+use Session;
 
 class UserController extends Controller
 {
@@ -44,15 +45,20 @@ class UserController extends Controller
             'email'    => 'required|email|unique:users',
             'password' =>  'required|confirmed|min:8'
         ]);
-        // dd($request->all());
+        $is_admin = $request->has('is_admin') ? $request->is_admin : 0;
+        // dd($is_admin);
             $user = User::create([
                 'name'     => $request->name,
                 'email'    => $request->email,
-                'is_admin'    => $request->is_admin,
+                'is_admin'    => $is_admin,
                 'password' => bcrypt($request->password)
             ]
         );
-        return redirect()->route('user.index');
+        $notification = array(
+            'message' => 'Added successfully!',
+            'alert-type' => 'success'
+        );
+        return redirect()->route('user.index')->with($notification);
     }
 
     /**
@@ -92,9 +98,13 @@ class UserController extends Controller
         $update_user->is_admin = $request->is_admin ? $request->is_admin : 0;
 
         // update pass if available
-        if ($request->has('password') ) $update_user->password = bcrypt($request->password) ;
+        if ($request->password != null ) $update_user->password = bcrypt($request->password) ;
+        $notification = array(
+            'message' => 'Updated successfully!',
+            'alert-type' => 'success'
+        );
         $update_user->save() ;
-        return redirect()->route('user.index') ;
+        return redirect()->route('user.index')->with($notification);
     }
 
     /**
@@ -106,11 +116,49 @@ class UserController extends Controller
     public function destroy($id)
     {
         $delete_user = User::find($id);
-        if ( Auth::id() == $id || \Auth::user()->is_super_admin === 1) {
-	        return redirect()->back();
+        if ( Auth::id() === $id || $delete_user->is_super_admin === 1) {
+            $notification = array(
+                'message' => 'Cannot delete super_admin',
+                'alert-type' => 'error'
+            );
+            return redirect()->back()->with($notification);
         }
         $delete_user->delete() ;
-        return redirect()->back();
+        $notification = array(
+            'message' => 'Deleted successfully!',
+            'alert-type' => 'success'
+        );
+        return redirect()->back()->with($notification);
     }
 
+    public function change_password()
+    {
+        return view('user.change_password');
+    }
+    
+    public function update_password(Request $request)
+    {
+        $this->validate($request, [
+            'old_password' => 'required',
+            'password' => 'required|confirmed',
+            'password_confirmation' => 'required'
+        ]);
+
+        $user = User::find(Auth::id());
+        if (!\Hash::check($request->old_password, $user->password)) {
+            $notification = array(
+                'message' => 'Current password does not match!',
+                'alert-type' => 'warning'
+            );
+            return redirect()->back()->with($notification);
+        }
+        $user->password = \Hash::make($request->password);
+        $user->save();
+
+        $notification = array(
+            'message' => 'Password Updated!',
+            'alert-type' => 'success'
+        );
+        return redirect()->route('task.staff')->with($notification);
+    }
 }

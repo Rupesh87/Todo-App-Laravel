@@ -10,32 +10,51 @@
     <title>{{ config('app.name', 'Laravel') }}</title>
 
     <!-- Scripts -->
+    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+<link href="{{ asset('css/toastr.css') }}" rel="stylesheet">
     <script src="{{ asset('js/app.js') }}" defer></script>
-    <script src="{{ asset('js/bootstrap.js') }}" ></script>
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css?family=Nunito" rel="stylesheet">
     <!-- Styles -->
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+  
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+
 </head>
 <body>
     <div id="app">
-@include('sweet::alert')
+    @include('sweet::alert')
         <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
             <div class="container">
-                <a class="navbar-brand" href="{{ url('/') }}">
-                   To Do App
-                </a>
-                       
-                @if (Route::has('home') || Route::has('users'))
-                <a class="navbar-brand ml-2" href="{{ url('/tasks') }}">
-                    Tasks
-                </a>
-                <a class="navbar-brand" href="{{ url('/users') }}">
-                    Users
-                </a>
+                <a class="navbar-brand" href="#" disabled>To Do App
+                @if ((Auth::user() && Auth::user()->is_admin === 1))
+                    (Admin Panel)
+                @elseif ((Auth::user() && Auth::user()->is_admin === 0))
+                    (Staff Panel)
                 @endif
+                </a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                    @if ((Auth::user() && Auth::user()->is_admin === 1))
+                    <li class="nav-item active">
+                        <a class="nav-link" href="{{ url('/tasks') }}">Manage Task <span class="sr-only">(current)</span></a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="{{ url('/users') }}">Manage User <span class="sr-only">(current)</span></a>
+                    </li>
+                    @elseif ((Auth::user() && Auth::user()->is_admin === 0))
+                        <li class="nav-item active">
+                            <a class="nav-link" href="{{ url('/staff/tasks') }}">My Task <span class="sr-only">(current)</span></a>
+                        </li>
+                    @endif
+                    </ul>
+                </div>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -59,6 +78,13 @@
                                 </li>
                             @endif
                         @else
+                        @if ((Auth::user() && Auth::user()->is_admin === 0))
+                            <li class="nav-item dropdown">
+                                <a id="" class="nav-link " href="{{url('/staff/changepassword')}}">
+                                    Change Password <span class="caret"></span>
+                                </a>
+                            </li>
+                            @endif
                             <li class="nav-item dropdown">
                                 <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
                                     {{ Auth::user()->name }} <span class="caret"></span>
@@ -83,8 +109,31 @@
         </nav>
 
         <main class="py-4">
+        
+
             @yield('content')
         </main>
     </div>
 </body>
 </html>
+<script>    
+	@if(Session::has('message'))
+		var type="{{Session::get('alert-type','info')}}"
+
+	
+		switch(type){
+			case 'info':
+		         toastr.info("{{ Session::get('message') }}");
+		         break;
+	        case 'success':
+	            toastr.success("{{ Session::get('message') }}");
+	            break;
+         	case 'warning':
+	            toastr.warning("{{ Session::get('message') }}");
+	            break;
+	        case 'error':
+		        toastr.error("{{ Session::get('message') }}");
+		        break;
+		}
+	@endif
+</script>

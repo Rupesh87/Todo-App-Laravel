@@ -7,17 +7,24 @@ use App\User;
 use Illuminate\Http\Request;
 use Validator,Redirect,Response;
 use UxWeb\SweetAlert\SweetAlert;
+use Session;
 class TaskController extends Controller
 {
 
     public function index()
     {
+        // $request->session()->flash('success', 'Post created successfully.');
         $data = [
             'tasks'  => Task::with('user')->orderBy('created_at', 'desc')->paginate(10),
-            'users' => User::all(),
+            'users' => User::where('is_admin', '=', 0)->get(),
             'auth_id' => auth()->id()
         ];
-        // dd($data['tasks']);
+        // dd($data['users']);
+        if($data['users']->count() == 0)
+        {
+            Session::flash('message', 'Please create staff first to assign task!') ;
+            Session::flash('alert-type', 'warning'); 
+        }
         return view('task.task')->with($data);
     }
 
@@ -52,9 +59,14 @@ class TaskController extends Controller
             'duedate' => 'required',
             'status' => 'required',
             'priority' => 'required|numeric',
+            'description' => ['required', 'string', 'max:255']
         ]);
         $task = Task::create($data);
-        return Redirect::to("tasks")->withSuccess('Great! Form successfully submit with validation.');
+        $notification = array(
+            'message' => 'Added Task successfully!',
+            'alert-type' => 'success'
+        );
+        return Redirect::to("tasks")->with($notification);
     }
 
     /**
@@ -104,6 +116,7 @@ class TaskController extends Controller
             'status' => 'required|numeric',
             'priority' => 'required|numeric',
             'completed' => 'required|numeric',
+            'description' => ['required', 'string', 'max:255'],
         ]);
 
         $update_task->task_title = $request->task_title; 
@@ -113,11 +126,11 @@ class TaskController extends Controller
         $update_task->status   = $request->status;
         $update_task->priority  = $request->priority;
         $update_task->completed  = $request->completed;
+        $update_task->description  = $request->description; 
 
-        $update_task->save() ;
-        
-        // Session::flash('success', 'Task was sucessfully edited') ;
-        return redirect()->route('task.show')->with('success', 'Login Successfully!');
+        $update_task->save();
+        return redirect()->route('task.show')->with(['message' => 'Updated successfully!',
+        'alert-type' => 'success']);
     }
 
     /**
@@ -128,13 +141,13 @@ class TaskController extends Controller
      */
     public function destroy($id)
     {
-    //     SweetAlert::message('Robots are working!');
-    //    return redirect('tasks');
-    //     exit;
         $delete_task = Task::find($id) ;
         $delete_task->delete() ;
-        // Session::flash('success', 'Task was deleted') ;
-        return redirect()->back();
+        $notification = array(
+            'message' => 'Deleted successfully!',
+            'alert-type' => 'success'
+        );
+        return redirect()->back()->with($notification);
     }
 
     public function completed($id)
@@ -142,7 +155,8 @@ class TaskController extends Controller
         $task_complete = Task::find($id) ;
         $task_complete->completed = 1;
         $task_complete->save() ;
-        return redirect()->back()->with('success', 'Login Successfully!');;
+        return redirect()->back()->with(['message' => 'Marked as complected!',
+        'alert-type' => 'success']);;
     }
 
     public function view($id)  {

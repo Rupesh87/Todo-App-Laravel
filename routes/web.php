@@ -59,5 +59,5 @@ Route::group(['middleware' => 'auth'], function()
 
 });
 
-Route::post('reset_password_without_token', 'AccountsController@validatePasswordRequest');
+Route::get('reset_password_without_token', 'AccountsController@validatePasswordRequest')->name('reset_password_without_token');
 Route::post('reset_password_with_token', 'AccountsController@resetPassword');

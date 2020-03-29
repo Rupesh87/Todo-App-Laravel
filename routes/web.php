@@ -61,3 +61,15 @@ Route::group(['middleware' => 'auth'], function()
 
 Route::get('reset_password_without_token', 'AccountsController@validatePasswordRequest')->name('reset_password_without_token');
 Route::post('reset_password_with_token', 'AccountsController@resetPassword');
+
+Route::get('markAllAsRead', function() {
+    auth()->user()->unreadNotifications->markAsRead();
+    $notification = array(
+        'message' => 'Cleared Notification',
+        'alert-type' => 'success'
+    );
+    if(!auth()->user()->is_admin()){
+        return Redirect::to("staff/tasks")->with($notification);
+    }
+    return Redirect::to("tasks")->with($notification);
+});

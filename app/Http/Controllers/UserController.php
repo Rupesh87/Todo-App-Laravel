@@ -46,7 +46,6 @@ class UserController extends Controller
             'password' =>  'required|confirmed|min:8'
         ]);
         $is_admin = $request->has('is_admin') ? $request->is_admin : 0;
-        // dd($is_admin);
             $user = User::create([
                 'name'     => $request->name,
                 'email'    => $request->email,
@@ -87,6 +86,13 @@ class UserController extends Controller
     public function update(Request $request, $id)
     {
         $update_user = User::find($id);
+        if($update_user->is_super_admin){
+            $notification = array(
+                'message' => 'Alert! Cannot update super admin profile.!',
+                'alert-type' => 'warning'
+            );
+            return redirect()->route('user.index')->with($notification);
+        }
         $data = request()->validate([
             'name'     => 'required',
             'email'    => 'required|email|unique:users,email,'.$id,

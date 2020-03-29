@@ -17,7 +17,6 @@
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css?family=Nunito" rel="stylesheet">
     <!-- Styles -->
-    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
   
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 
@@ -85,6 +84,27 @@
                                 </a>
                             </li>
                             @endif
+                            <li class="nav-item dropdown">
+                                <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
+                                  <span class="glyphicon glyphicon-globe-red"></span>  Notification <span class="badge badge-success">{{ count(auth()->user()->unreadNotifications)}}</span>
+                                </a>
+
+                                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+                                    @if(count(auth()->user()->unreadNotifications) > 0)
+                                    <a class="float-right mr-3" href="{{ url('/markAllAsRead') }}"> Mark all as read </a>
+                                        @foreach(auth()->user()->unreadNotifications as $notification)
+                                            <a class="dropdown-item"  href="{{ url('/tasks/view/'.$notification->data['task_id'] ) }}"  target="_blank">
+                                                {{ $notification->data['message'] }}
+                                                </a>
+                                        @endforeach
+                                    @else 
+                                        <a class="dropdown-item" href="#"
+                                            onclick="event.preventDefault();">
+                                                No Notification Avialabel
+                                            </a>
+                                    @endif
+                                </div>
+                            </li>
                             <li class="nav-item dropdown">
                                 <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
                                     {{ Auth::user()->name }} <span class="caret"></span>

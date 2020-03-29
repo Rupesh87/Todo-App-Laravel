@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Validator,Redirect,Response;
 use UxWeb\SweetAlert\SweetAlert;
 use Session;
+use App\Notifications\TaskNotification;
 class TaskController extends Controller
 {
 
@@ -57,6 +58,19 @@ class TaskController extends Controller
             'user_id' => 'required|numeric',
             'admin_id' => 'required|numeric',
             'duedate' => 'required',
+            'status' => 'required',
+            'priority' => 'required|numeric',
+            'description' => ['required', 'string', 'max:255']
+        ]);
+        $task = Task::create($data);
+        $notification = array(
+            'message' => 'Added Task successfully!',
+            'alert-type' => 'success'
+        );
+        return Redirect::to("tasks")->with($notification);
+    }
+
+    /**e' => 'required',
             'status' => 'required',
             'priority' => 'required|numeric',
             'description' => ['required', 'string', 'max:255']
@@ -154,7 +168,16 @@ class TaskController extends Controller
     {
         $task_complete = Task::find($id) ;
         $task_complete->completed = 1;
-        $task_complete->save() ;
+        $task_complete->save();
+        if(auth()->user()->is_admin){
+            $user = User::find($task_complete->user_id);
+            $message = $task_complete->task_title. ' task title has been set to completed by '. auth()->user()->name. '(Admin)';
+            $user->notify(new TaskNotification($message,$id));
+        } else {
+            $user = User::find($task_complete->admin_id);
+            $message = $task_complete->task_title. ' task has been completed by '. auth()->user()->name;
+            $user->notify(new TaskNotification($message, $id));
+        }
         return redirect()->back()->with(['message' => 'Marked as complected!',
         'alert-type' => 'success']);;
     }

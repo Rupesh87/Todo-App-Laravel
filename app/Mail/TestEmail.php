@@ -10,15 +10,15 @@ use Illuminate\Queue\SerializesModels;
 class TestEmail extends Mailable
 {
     use Queueable, SerializesModels;
-
+    protected $message;
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct($message)
     {
-        //
+        $this->message = $message;
     }
 
     /**
@@ -28,16 +28,9 @@ class TestEmail extends Mailable
      */
     public function build()
     {
-        $address = 'rupandroo+test123@gmail.com';
-        $subject = 'This is a demo!';
-        $name = 'Jane Doe';
-        
+        // dd($this->message);
         return $this->view('emails.test')
-                    ->from($address, $name)
-                    ->cc($address, $name)
-                    ->bcc($address, $name)
-                    ->replyTo($address, $name)
-                    ->subject($subject)
-                    ->with([ 'test_message' => $this->data['message'] ]);
+        ->subject("Reset Password Link")
+        ->with([ 'test_message' => $this->message ]);
     }
 }

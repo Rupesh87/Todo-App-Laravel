@@ -42,7 +42,6 @@ return [
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
         ],
-
         'ses' => [
             'transport' => 'ses',
         ],
@@ -74,7 +73,7 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
+        'address' => env('MAIL_FROM_ADDRESS', 'rupandro1o@gmail.com'),
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 

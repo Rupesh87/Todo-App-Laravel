@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use App\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use DB;
 use Str;
 use Carbon\Carbon;
@@ -45,16 +46,10 @@ class AccountsController extends Controller
     private function sendResetEmail($email, $token)
     {
         $user = DB::table('users')->where('email', $email)->select('name', 'email')->first();
-        $link = config('base_url') . 'password/reset/' . $token . '?email=' . urlencode($user->email);
-
+        $link = request()->getHost() . '/password/reset/' . $token . '?email=' . urlencode($user->email);
+        
         try {
-            $data = ['message' => 'Please check this link to reset Password'. $link];
-
-            Mail::send('emails.reminder', ['data' => $data], function ($m) use ($data) {
-                $m->from('noreply@app.com', 'TO Do');
-    
-                $m->to(emaill, 'Dear User')->subject('Your Password reset Link');
-            });
+            Mail::to($email)->send(new TestEmail('Please check this link to reset Password '. $link));
             return true;
         } catch (\Exception $e) {
             return false;
@@ -63,18 +58,14 @@ class AccountsController extends Controller
 
     public function resetPassword(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $validator = \Validator::make($request->all(), [
             'email' => 'required|exists:users,email',
             'password' => 'required|confirmed'
         ]);
-
+        // dd( $validator->messages());
         //check if input is valid before moving on
         if ($validator->fails()) {
-            $notification = array(
-                'message' => 'Please complete the form.',
-                'alert-type' => 'warning'
-            );
-            return redirect()->back()->with($notification);
+            return redirect()->back()->withErrors( $validator->messages());
         }
 
         $password = $request->password;
@@ -82,8 +73,14 @@ class AccountsController extends Controller
         $tokenData = DB::table('password_resets')
         ->where('token', $request->token)->first();
         // Redirect the user back to the password reset request form if the token is invalid
-        if (!$tokenData) return view('auth.passwords.email');
-
+        if (!$tokenData) 
+        {
+            $notification = array(
+                'message' => "Token doesn't match!",
+                'alert-type' => 'warning'
+            );
+            return redirect('password/reset')->with($notification);
+        }
         $user = User::where('email', $tokenData->email)->first();
         // Redirect the user back if the email is invalid
         if (!$user) return redirect()->back()->withErrors(['email' => 'Email not found']);
@@ -97,34 +94,10 @@ class AccountsController extends Controller
         //Delete the token
         DB::table('password_resets')->where('email', $user->email)
         ->delete();
-
-        //Send Email Reset Success Email
-        if ($this->sendSuccessEmail($tokenData->email)) {
-            return view('index');
-        } else {
-            $notification = array(
-                'message' => 'A Network Error occurred. Please try again.',
-                'alert-type' => 'warning'
-            );
-            return redirect()->back()->with($notification);
-        }
-
+        return redirect('home')->with([
+            'message' => 'Welcome Back. Password has been reset!',
+            'alert-type' => 'warning'
+        ]);
     }
 
-    private function sendSuccessEmail($email)
-    {
-        $user = DB::table('users')->where('email', $email)->select('name', 'email')->first();
-        $link = config('base_url') . 'password/reset/' . $token . '?email=' . urlencode($user->email);
-
-        try {
-            Mail::send('emails.test', function ($m)  {
-                $m->from('noreply@email.com', 'Your Application');
-    
-                $m->to($email, "User")->subject('Your Password has been updated!');
-            });
-            return true;
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
 }
